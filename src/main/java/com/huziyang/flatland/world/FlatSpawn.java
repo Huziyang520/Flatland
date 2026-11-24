@@ -71,31 +71,52 @@ public final class FlatSpawn {
             return null;
         }
 
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
-        for (int x = -SEARCH_RADIUS; x <= SEARCH_RADIUS; x += SEARCH_STEP) {
-            for (int z = -SEARCH_RADIUS; z <= SEARCH_RADIUS; z += SEARCH_STEP) {
-                if (FlatRuntime.bandWeight(x, z) < MIN_WEIGHT) {
-                    continue;
+        for (int radius = 0; radius <= SEARCH_RADIUS; radius += SEARCH_STEP) {
+            BlockPos best = null;
+            if (radius == 0) {
+                best = candidateAt(source, state, 0, 0, y);
+            } else {
+                for (int x = -radius; x <= radius; x += SEARCH_STEP) {
+                    best = closer(best, candidateAt(source, state, x, -radius, y));
+                    best = closer(best, candidateAt(source, state, x, radius, y));
                 }
-                Holder<Biome> biome;
-                try {
-                    biome = source.getNoiseBiome(
-                            QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z), state.sampler());
-                } catch (RuntimeException ignored) {
-                    continue;
-                }
-                if (!FlatRuntime.isFlatBiome(biome)) {
-                    continue;
-                }
-                double distance = (double) x * x + (double) z * z;
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    best = new BlockPos(x, y + 1, z);
+                for (int z = -radius + SEARCH_STEP; z <= radius - SEARCH_STEP; z += SEARCH_STEP) {
+                    best = closer(best, candidateAt(source, state, -radius, z, y));
+                    best = closer(best, candidateAt(source, state, radius, z, y));
                 }
             }
+            if (best != null) {
+                return best;
+            }
         }
-        return best;
+        return null;
+    }
+
+    private static BlockPos candidateAt(BiomeSource source, RandomState state, int x, int z, int y) {
+        if (FlatRuntime.bandWeight(x, z) < MIN_WEIGHT) {
+            return null;
+        }
+        try {
+            Holder<Biome> biome = source.getNoiseBiome(
+                    QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z), state.sampler());
+            return FlatRuntime.isFlatBiome(biome) ? new BlockPos(x, y + 1, z) : null;
+        } catch (RuntimeException exception) {
+            return null;
+        }
+    }
+
+    private static BlockPos closer(BlockPos best, BlockPos candidate) {
+        if (candidate == null) {
+            return best;
+        }
+        if (best == null) {
+            return candidate;
+        }
+        double candidateDistance = (double) candidate.getX() * candidate.getX()
+                + (double) candidate.getZ() * candidate.getZ();
+        double bestDistance = (double) best.getX() * best.getX()
+                + (double) best.getZ() * best.getZ();
+        return candidateDistance < bestDistance ? candidate : best;
     }
 
     private static final class Data extends SavedData {

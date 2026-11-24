@@ -32,7 +32,7 @@ public abstract class NoiseBasedChunkGeneratorMixin {
     }
 
     @Inject(method = "buildSurface(Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/biome/BiomeManager;Lnet/minecraft/core/Registry;Lnet/minecraft/world/level/levelgen/blending/Blender;)V",
-            at = @At("HEAD"), remap = false)
+            at = @At("TAIL"), remap = false)
     private void flatland$shave(ChunkAccess chunk, WorldGenerationContext context, RandomState state,
             StructureManager structures, BiomeManager biomes, Registry<Biome> registry, Blender blender,
             CallbackInfo ci) {
