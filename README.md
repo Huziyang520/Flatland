@@ -4,6 +4,12 @@
 
 A perfectly flat plains biome, level with the sea.
 
+## 📸 Screenshots
+
+![Flatland plains blending into vanilla terrain](https://raw.githubusercontent.com/Huziyang520/Flatland/26.3/images/example.png)
+
+![Flatland biome map](https://raw.githubusercontent.com/Huziyang520/Flatland/26.3/images/example2.png)
+
 ## ✨ Features
 
 - 🌱 **Three flat biomes** — Flat Plains, Flat Snowy Plains and Flat Desert.
