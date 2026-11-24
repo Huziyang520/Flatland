@@ -35,7 +35,7 @@ public final class FlatlandFabricConfig {
 
         FLAT_HEIGHT = builder
                 .comment("Y of the top solid block. 62 keeps the ground flush with the sea surface and leaves the block above as air.")
-                .defineInRange("flat_height", 62, 55, 70);
+                .defineInRange("flat_height", 62, 62, 70);
 
         FLAT_STRENGTH = builder
                 .comment("0 keeps vanilla terrain, 100 makes the converted area perfectly flat.",
@@ -47,7 +47,7 @@ public final class FlatlandFabricConfig {
                 .defineEnum("variant", Variant.AUTO);
 
         SPAWN_PREFER = builder
-                .comment("Move the world spawn into flatland once, on the first load of a world. Never touches existing worlds twice.")
+                .comment("Move the world spawn into flatland once, when a brand-new world is created. Existing worlds are left untouched.")
                 .define("spawn_prefer_flatland", true);
 
         CONFIG_VERSION = builder

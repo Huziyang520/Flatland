@@ -44,10 +44,6 @@ public abstract class MultiNoiseBiomeSourceMixin {
     @Inject(method = "collectPossibleBiomes()Ljava/util/stream/Stream;",
             at = @At("RETURN"), cancellable = true, remap = false)
     private void flatland$possibleBiomes(CallbackInfoReturnable<Stream<Holder<Biome>>> cir) {
-        Stream<Holder<Biome>> extra = FlatRuntime.possibleBiomes();
-        if (extra == null) {
-            return;
-        }
-        cir.setReturnValue(Stream.concat(cir.getReturnValue(), extra).distinct());
+        cir.setReturnValue(Stream.concat(cir.getReturnValue(), FlatRuntime.possibleBiomes()).distinct());
     }
 }

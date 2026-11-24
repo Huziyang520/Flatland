@@ -1,7 +1,7 @@
 package com.huziyang.flatland.world;
 
 /**
- * Flatness weight field. Pure function of (seed, x, z): the biome remap, the density and
+ * Flatness weight field. Pure function of (seed, x, z): the biome remap, the terrain shave
  * the height queries all read this same value, so they can never disagree about where it is flat.
  */
 public final class FlatBand {
