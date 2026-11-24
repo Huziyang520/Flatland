@@ -15,5 +15,15 @@
   "flatland.configuration.worldgen.variant.snowy": "Snowy",
   "flatland.configuration.worldgen.variant.sandy": "Sandy",
   "flatland.configuration.worldgen.spawn_prefer_flatland": "Spawn preference",
-  "flatland.configuration.worldgen.config_version": "Config version"
+  "flatland.configuration.worldgen.config_version": "Config version",
+  "flatland.configuration.replace_scope": "Replace scope",
+  "flatland.configuration.flat_height": "Flat height",
+  "flatland.configuration.flat_strength": "Flat strength",
+  "flatland.configuration.variant": "Variant",
+  "flatland.configuration.variant.auto": "Auto",
+  "flatland.configuration.variant.temperate": "Temperate",
+  "flatland.configuration.variant.snowy": "Snowy",
+  "flatland.configuration.variant.sandy": "Sandy",
+  "flatland.configuration.spawn_prefer_flatland": "Spawn preference",
+  "flatland.configuration.config_version": "Config version"
 }

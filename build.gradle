@@ -4,5 +4,5 @@ plugins {
 }
 
 allprojects {
-    description = '[EN] A perfectly flat plains biome flush with sea level, optionally replacing vanilla plains, snowy plains and desert. Issues: https://github.com/Huziyang520/Flatland/issues [CN] 一马平川：与海面齐平的绝对平坦平原群系，可选替换部分原版平原、雪原与沙漠。问题反馈：https://github.com/Huziyang520/Flatland/issues'
+    description = '[EN] A perfectly flat plains biome flush with sea level, optionally replacing vanilla plains, snowy plains and desert. [CN] 一马平川：与海面齐平的绝对平坦平原群系，可选替换部分原版平原、雪原与沙漠。'
 }

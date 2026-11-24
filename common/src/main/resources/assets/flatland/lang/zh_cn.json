@@ -15,5 +15,15 @@
   "flatland.configuration.worldgen.variant.snowy": "雪原",
   "flatland.configuration.worldgen.variant.sandy": "沙地",
   "flatland.configuration.worldgen.spawn_prefer_flatland": "出生点偏好",
-  "flatland.configuration.worldgen.config_version": "配置版本"
+  "flatland.configuration.worldgen.config_version": "配置版本",
+  "flatland.configuration.replace_scope": "替换范围",
+  "flatland.configuration.flat_height": "平坦高度",
+  "flatland.configuration.flat_strength": "平坦强度",
+  "flatland.configuration.variant": "变体",
+  "flatland.configuration.variant.auto": "自动",
+  "flatland.configuration.variant.temperate": "温带",
+  "flatland.configuration.variant.snowy": "雪原",
+  "flatland.configuration.variant.sandy": "沙地",
+  "flatland.configuration.spawn_prefer_flatland": "出生点偏好",
+  "flatland.configuration.config_version": "配置版本"
 }

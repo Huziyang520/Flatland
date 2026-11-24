@@ -3,7 +3,7 @@ package com.huziyang.flatland.fabric;
 import com.huziyang.flatland.config.FlatlandSettings;
 import com.huziyang.flatland.world.FlatRuntime;
 import java.util.List;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class FlatlandFabricConfig {
     public enum Variant {
@@ -13,16 +13,16 @@ public final class FlatlandFabricConfig {
         SANDY
     }
 
-    public static final ForgeConfigSpec SPEC;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> REPLACE_SCOPE;
-    public static final ForgeConfigSpec.IntValue FLAT_HEIGHT;
-    public static final ForgeConfigSpec.IntValue FLAT_STRENGTH;
-    public static final ForgeConfigSpec.BooleanValue SPAWN_PREFER;
-    public static final ForgeConfigSpec.EnumValue<Variant> VARIANT;
-    public static final ForgeConfigSpec.IntValue CONFIG_VERSION;
+    public static final ModConfigSpec SPEC;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> REPLACE_SCOPE;
+    public static final ModConfigSpec.IntValue FLAT_HEIGHT;
+    public static final ModConfigSpec.IntValue FLAT_STRENGTH;
+    public static final ModConfigSpec.BooleanValue SPAWN_PREFER;
+    public static final ModConfigSpec.EnumValue<Variant> VARIANT;
+    public static final ModConfigSpec.IntValue CONFIG_VERSION;
 
     static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
         builder.comment("World generation. Changes only affect chunks that have not been generated yet.",
                 "COMMON config: editable from the main-menu mod list; a dedicated server reads its own copy.").push("worldgen");
 
