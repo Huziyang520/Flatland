@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.huziyang.flatland.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "flatland.refmap.json",
+  "mixins": [
+    "MultiNoiseBiomeSourceMixin",
+    "NoiseBasedChunkGeneratorMixin",
+    "RandomStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
