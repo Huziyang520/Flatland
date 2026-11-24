@@ -49,7 +49,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_license            : mod_license,
             mod_version            : mod_version,
             mod_authors            : mod_authors,
-            mod_description        : mod_description
+            mod_description        : '[EN] A perfectly flat plains biome flush with sea level, optionally replacing vanilla plains, snowy plains and desert. Issues: https://github.com/Huziyang520/Flatland/issues [CN] 一马平川：与海面齐平的绝对平坦平原群系，可选替换部分原版平原、雪原与沙漠。问题反馈：https://github.com/Huziyang520/Flatland/issues'
     ]
     inputs.properties replaceProperties
     filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
