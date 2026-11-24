@@ -1,6 +1,6 @@
 # 🌾 Flatland
 
-![Flatland icon](icon.png)
+![Flatland icon](https://raw.githubusercontent.com/Huziyang520/Flatland/1.21.1Neo/icon.png)
 
 A perfectly flat plains biome, level with the sea.
 
@@ -31,7 +31,7 @@ https://github.com/Huziyang520/Flatland/issues
 
 ## 📜 License
 
-CC0-1.0 — see [LICENSE](LICENSE).
+CC0-1.0 — see [LICENSE](https://github.com/Huziyang520/Flatland/blob/1.21.1Neo/LICENSE).
 
 ---
 
@@ -66,4 +66,4 @@ https://github.com/Huziyang520/Flatland/issues
 
 ## 📜 许可证
 
-CC0-1.0 — 详见 [LICENSE](LICENSE)。
+CC0-1.0 — 详见 [LICENSE](https://github.com/Huziyang520/Flatland/blob/1.21.1Neo/LICENSE)。
