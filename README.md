@@ -27,17 +27,11 @@ Flatland 只削平自己的群系；未开启替换时，原版群系保持原�
 
 ## ⚙️ Configuration / 配置
 
-Install **Neo ConfigurationScreen Port (NCP)** first. Flatland's settings can be opened from the main-menu mod list, even before entering a world.  
-请先安装 **Neo ConfigurationScreen Port（NCP）**。Flatland 的配置可在主界面模组列表中直接打开，无需先进入世界。
+Flatland's settings can be opened from the main-menu mod list, even before entering a world.  
+Flatland 的配置可在主界面模组列表中直接打开，无需先进入世界。
 
 You can adjust the flat height, flatness strength, replacement scope, biome variant and spawn preference.  
 可调整平坦高度、平坦强度、替换范围、群系变体与出生点偏好。
-
-## 📦 Installation / 安装
-
-1. Install NCP. / 安装 NCP。
-2. Put the Flatland jar in your mods folder. / 将 Flatland 放入 mods 文件夹。
-3. Launch the game and open Flatland's config from the mod list. / 启动游戏，在模组列表中打开 Flatland 配置。
 
 Existing chunks keep their original terrain; only newly generated chunks use the new settings.  
 已生成的区块保留原地形；只有新生成的区块会应用新设置。
