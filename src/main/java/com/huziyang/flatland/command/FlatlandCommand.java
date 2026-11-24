@@ -27,10 +27,14 @@ public final class FlatlandCommand {
 
     private static int status(CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal(String.format(
-                "active=%s height=%d strength=%.2f",
-                FlatRuntime.isLoaded() && FlatRuntime.strength() > 0.0F,
+                "active=%s height=%d strength=%.2f variant=%s scope=%d spawn_prefer=%s config_version=%d",
+                FlatRuntime.isActive(),
                 FlatRuntime.flatHeight(),
-                FlatRuntime.strength())), false);
+                FlatRuntime.strength(),
+                FlatRuntime.variantMode(),
+                FlatRuntime.scopeSize(),
+                FlatRuntime.spawnPrefer(),
+                FlatRuntime.configVersion())), false);
         return 1;
     }
 

@@ -44,7 +44,7 @@ public final class FlatTerrain {
 
     public static int targetHeight(int x, int z, int vanillaTop) {
         int flatHeight = FlatRuntime.flatHeight();
-        if (!FlatRuntime.isActive() || vanillaTop <= flatHeight) {
+        if (!FlatRuntime.isActive()) {
             return vanillaTop;
         }
         float weight = FlatRuntime.bandWeight(x, z);
@@ -54,7 +54,9 @@ public final class FlatTerrain {
         float t = (weight - BIOME_THRESHOLD) / (1.0F - BIOME_THRESHOLD);
         t = t * t * (3.0F - 2.0F * t) * FlatRuntime.strength();
         int target = Math.round(vanillaTop + (flatHeight - vanillaTop) * t);
-        return Math.min(vanillaTop, Math.max(flatHeight, target));
+        int low = Math.min(vanillaTop, flatHeight);
+        int high = Math.max(vanillaTop, flatHeight);
+        return Math.max(low, Math.min(high, target));
     }
 
     public static int adjustHeight(BiomeSource source, RandomState state, int x, int z, int vanillaHeight) {
@@ -70,7 +72,6 @@ public final class FlatTerrain {
         }
         int minY = chunk.getMinBuildHeight();
         int maxY = chunk.getMaxBuildHeight();
-        int flatHeight = FlatRuntime.flatHeight();
         var pos = chunk.getPos();
         boolean changed = false;
 
@@ -78,23 +79,42 @@ public final class FlatTerrain {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int x = pos.getMinBlockX() + localX;
                 int z = pos.getMinBlockZ() + localZ;
-                Holder<Biome> biome = biomeManager.getBiome(new BlockPos(x, flatHeight, z));
+                Holder<Biome> biome = biomeManager.getBiome(
+                        new BlockPos(x, FlatRuntime.flatHeight(), z));
                 if (!isFlatColumn(biome, x, z)) {
                     continue;
                 }
                 int top = topSolid(chunk, x, z, minY, maxY);
-                if (top <= flatHeight) {
+                if (top < 0) {
                     continue;
                 }
                 int target = targetHeight(x, z, top);
-                if (target >= top) {
-                    continue;
-                }
-                for (int y = target + 1; y <= top; y++) {
-                    BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
-                    if (!state.isAir() && state.getFluidState().isEmpty()) {
-                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), false);
+                if (target < top) {
+                    for (int y = target + 1; y <= top; y++) {
+                        BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
+                        if (!state.isAir() && state.getFluidState().isEmpty()) {
+                            chunk.setBlockState(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), false);
+                            changed = true;
+                        }
+                    }
+                } else if (target > top) {
+                    for (int y = top + 1; y <= target; y++) {
+                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState(), false);
                         changed = true;
+                    }
+                }
+                if (target >= minY && target < maxY) {
+                    BlockState surface = surfaceFor(biome);
+                    if (!chunk.getBlockState(new BlockPos(x, target, z)).equals(surface)) {
+                        chunk.setBlockState(new BlockPos(x, target, z), surface, false);
+                        changed = true;
+                    }
+                    if (target > minY) {
+                        BlockPos below = new BlockPos(x, target - 1, z);
+                        if (chunk.getBlockState(below).isAir()) {
+                            chunk.setBlockState(below, Blocks.DIRT.defaultBlockState(), false);
+                            changed = true;
+                        }
                     }
                 }
             }
@@ -111,11 +131,11 @@ public final class FlatTerrain {
         int minY = level.getMinBuildHeight();
         int height = level.getHeight();
         int top = topSolid(original, minY, minY + height);
-        if (top <= FlatRuntime.flatHeight() || !isFlatColumn(source, state, x, z)) {
+        if (!isFlatColumn(source, state, x, z)) {
             return original;
         }
         int target = targetHeight(x, z, top);
-        if (target >= top) {
+        if (target == top) {
             return original;
         }
 
@@ -123,11 +143,28 @@ public final class FlatTerrain {
         for (int i = 0; i < height; i++) {
             int y = minY + i;
             BlockState blockState = original.getBlock(y);
-            column[i] = y > target && !blockState.isAir() && blockState.getFluidState().isEmpty()
-                    ? Blocks.AIR.defaultBlockState()
-                    : blockState;
+            if (y > target && !blockState.isAir() && blockState.getFluidState().isEmpty()) {
+                column[i] = Blocks.AIR.defaultBlockState();
+            } else if (target > top && y > top && y <= target) {
+                column[i] = Blocks.DIRT.defaultBlockState();
+            } else {
+                column[i] = blockState;
+            }
         }
         return new NoiseColumn(minY, column);
+    }
+
+    private static BlockState surfaceFor(Holder<Biome> biome) {
+        return biome.unwrapKey().map(key -> {
+            String path = key.location().getPath();
+            if ("flat_desert".equals(path)) {
+                return Blocks.SAND.defaultBlockState();
+            }
+            if ("flat_snowy_plains".equals(path)) {
+                return Blocks.SNOW_BLOCK.defaultBlockState();
+            }
+            return Blocks.GRASS_BLOCK.defaultBlockState();
+        }).orElse(Blocks.GRASS_BLOCK.defaultBlockState());
     }
 
     private static int topSolid(ChunkAccess chunk, int x, int z, int minY, int maxY) {
