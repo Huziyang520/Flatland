@@ -1,0 +1,8 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21' apply false
+    id 'net.neoforged.moddev' version '2.0.147' apply false
+}
+
+allprojects {
+    description = '[EN] Adds a perfectly flat plains biome flush with sea level, with snowy and desert variants, optionally replacing part of vanilla plains, snowy plains and desert. Issues: https://github.com/Huziyang520/Flatland/issues [CN] 新增与海面齐平的绝对平坦平原群系，并带雪原与沙漠变体，可选替换部分原版平原、雪原与沙漠。问题反馈：https://github.com/Huziyang520/Flatland/issues'
+}

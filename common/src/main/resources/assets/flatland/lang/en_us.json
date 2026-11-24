@@ -1,0 +1,19 @@
+{
+  "biome.flatland.flat_plains": "Flat Plains",
+  "biome.flatland.flat_snowy_plains": "Flat Snowy Plains",
+  "biome.flatland.flat_desert": "Flat Desert",
+  "flatland.configuration.title": "Flatland",
+  "flatland.configuration.section.flatland-common": "World Generation",
+  "flatland.configuration.section.flatland-common.toml": "World Generation",
+  "flatland.configuration.worldgen": "World Generation",
+  "flatland.configuration.worldgen.replace_scope": "Replace scope",
+  "flatland.configuration.worldgen.flat_height": "Flat height",
+  "flatland.configuration.worldgen.flat_strength": "Flat strength",
+  "flatland.configuration.worldgen.variant": "Variant",
+  "flatland.configuration.worldgen.variant.auto": "Auto",
+  "flatland.configuration.worldgen.variant.temperate": "Temperate",
+  "flatland.configuration.worldgen.variant.snowy": "Snowy",
+  "flatland.configuration.worldgen.variant.sandy": "Sandy",
+  "flatland.configuration.worldgen.spawn_prefer_flatland": "Spawn preference",
+  "flatland.configuration.worldgen.config_version": "Config version"
+}

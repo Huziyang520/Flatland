@@ -1,0 +1,24 @@
+pluginManagement {
+    repositories {
+        maven { name = 'Aliyun'; url = 'https://maven.aliyun.com/repository/gradle-plugin' }
+        gradlePluginPortal()
+        mavenCentral()
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = 'Fabric'
+                    url = uri('https://maven.fabricmc.net')
+                }
+            }
+            filter {
+                includeGroupAndSubgroups('net.fabricmc')
+            }
+        }
+    }
+}
+
+rootProject.name = 'Flatland-26.3'
+includeBuild('build-logic')
+include('common')
+include('fabric')
+include('neoforge')

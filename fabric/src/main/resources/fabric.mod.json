@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "flatland",
+  "version": "${version}",
+  "name": "Flatland",
+  "description": "[EN] Adds a perfectly flat plains biome flush with sea level, with snowy and desert variants, optionally replacing part of vanilla plains, snowy plains and desert. Issues: https://github.com/Huziyang520/Flatland/issues [CN] 新增与海面齐平的绝对平坦平原群系，并带雪原与沙漠变体，可选替换部分原版平原、雪原与沙漠。问题反馈：https://github.com/Huziyang520/Flatland/issues",
+  "authors": [
+    "Huziyang520"
+  ],
+  "contact": {
+    "homepage": "https://github.com/Huziyang520/Flatland",
+    "sources": "https://github.com/Huziyang520/Flatland",
+    "issues": "https://github.com/Huziyang520/Flatland/issues"
+  },
+  "license": "CC0-1.0",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.huziyang.flatland.fabric.FlatlandFabric"
+    ],
+    "client": [
+      "com.huziyang.flatland.fabric.FlatlandFabricClient"
+    ]
+  },
+  "mixins": [
+    "flatland.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "fabric-api": "*",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "forgeconfigapiport": ">=26.3.1"
+  },
+  "recommends": {
+    "modmenu": "*"
+  }
+}
