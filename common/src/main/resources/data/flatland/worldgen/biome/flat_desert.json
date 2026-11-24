@@ -23,15 +23,10 @@
               "type": "minecraft:rabbit",
               "count": {
                 "type": "minecraft:uniform",
-                "max_inclusive": 3,
-                "min_inclusive": 2
+                "min_inclusive": 2,
+                "max_inclusive": 3
               },
-              "weight": 12
-            },
-            {
-              "type": "minecraft:camel",
-              "count": 1,
-              "weight": 1
+              "weight": 4
             }
           ],
           "monster": [
@@ -53,7 +48,7 @@
             {
               "type": "minecraft:skeleton",
               "count": 4,
-              "weight": 50
+              "weight": 100
             },
             {
               "type": "minecraft:creeper",
@@ -69,8 +64,8 @@
               "type": "minecraft:enderman",
               "count": {
                 "type": "minecraft:uniform",
-                "max_inclusive": 4,
-                "min_inclusive": 1
+                "min_inclusive": 1,
+                "max_inclusive": 4
               },
               "weight": 10
             },
@@ -83,11 +78,6 @@
               "type": "minecraft:husk",
               "count": 4,
               "weight": 80
-            },
-            {
-              "type": "minecraft:parched",
-              "count": 4,
-              "weight": 50
             }
           ],
           "underground_water_creature": [
@@ -95,8 +85,8 @@
               "type": "minecraft:glow_squid",
               "count": {
                 "type": "minecraft:uniform",
-                "max_inclusive": 6,
-                "min_inclusive": 4
+                "min_inclusive": 4,
+                "max_inclusive": 6
               },
               "weight": 10
             }
@@ -156,7 +146,6 @@
       "minecraft:ore_redstone",
       "minecraft:ore_redstone_lower",
       "minecraft:ore_diamond",
-      "minecraft:ore_diamond_medium",
       "minecraft:ore_diamond_large",
       "minecraft:ore_diamond_buried",
       "minecraft:ore_lapis",
@@ -176,7 +165,6 @@
       "minecraft:glow_lichen",
       "minecraft:flower_default",
       "minecraft:patch_grass_badlands",
-      "minecraft:patch_dry_grass_desert",
       "minecraft:patch_dead_bush_2",
       "minecraft:brown_mushroom_normal",
       "minecraft:red_mushroom_normal",

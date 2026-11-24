@@ -19,17 +19,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class NoiseBasedChunkGeneratorMixin {
     @Inject(
             method = "buildSurface(Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/NoiseChunk;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/biome/BiomeManager;Ljava/util/Set;Lnet/minecraft/world/level/levelgen/material/rule/MaterialRule;)V",
-            at = @At("HEAD"), remap = false)
-    private void flatland$shave(ChunkAccess chunk, NoiseChunk noiseChunk, RandomState state,
+            at = @At("TAIL"), remap = false)
+    private void flatland$finishSurface(ChunkAccess chunk, NoiseChunk noiseChunk, RandomState state,
             BiomeManager biomeManager, Set<Holder<Biome>> biomes, MaterialRule rule, CallbackInfo ci) {
         FlatTerrain.shave(chunk, biomeManager);
-    }
-
-    @Inject(
-            method = "buildSurface(Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/NoiseChunk;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/biome/BiomeManager;Ljava/util/Set;Lnet/minecraft/world/level/levelgen/material/rule/MaterialRule;)V",
-            at = @At("TAIL"), remap = false)
-    private void flatland$paintDesert(ChunkAccess chunk, NoiseChunk noiseChunk, RandomState state,
-            BiomeManager biomeManager, Set<Holder<Biome>> biomes, MaterialRule rule, CallbackInfo ci) {
-        FlatTerrain.paintDesertSurface(chunk, biomeManager);
     }
 }

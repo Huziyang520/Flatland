@@ -35,6 +35,7 @@ public final class FlatRuntime {
     private static volatile float strength = 1.0F;
     private static volatile String variantMode = "AUTO";
     private static volatile boolean spawnPrefer = true;
+    private static volatile int configVersion = 1;
     private static volatile Set<ResourceKey<Biome>> scope = Set.of();
     private static final Map<ResourceKey<Biome>, Holder<Biome>> FLAT_BIOMES = new HashMap<>();
 
@@ -50,6 +51,7 @@ public final class FlatRuntime {
         strength = Math.max(0, Math.min(100, settings.flatStrength())) / 100.0F;
         variantMode = settings.variant().toUpperCase(Locale.ROOT);
         spawnPrefer = settings.spawnPrefer();
+        configVersion = settings.configVersion();
 
         Set<ResourceKey<Biome>> configured = new HashSet<>();
         for (String entry : settings.replaceScope()) {
@@ -61,7 +63,7 @@ public final class FlatRuntime {
             configured.add(ResourceKey.create(Registries.BIOME, id));
         }
         scope = Collections.unmodifiableSet(configured);
-        active = strength > 0.0F;
+        active = strength > 0.0F && !configured.isEmpty();
         loaded = true;
     }
 
@@ -106,6 +108,18 @@ public final class FlatRuntime {
 
     public static boolean spawnPrefer() {
         return spawnPrefer;
+    }
+
+    public static String variantMode() {
+        return variantMode;
+    }
+
+    public static int scopeSize() {
+        return scope.size();
+    }
+
+    public static int configVersion() {
+        return configVersion;
     }
 
     public static boolean isOverworldLike(BlockState defaultBlock, int seaLevel) {

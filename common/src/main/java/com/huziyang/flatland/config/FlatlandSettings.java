@@ -7,13 +7,15 @@ public record FlatlandSettings(
         int flatHeight,
         int flatStrength,
         String variant,
-        boolean spawnPrefer) {
+        boolean spawnPrefer,
+        int configVersion) {
     public static FlatlandSettings defaults() {
         return new FlatlandSettings(
                 List.of("minecraft:plains", "minecraft:sunflower_plains", "minecraft:snowy_plains", "minecraft:desert"),
                 62,
                 100,
                 "AUTO",
-                true);
+                true,
+                1);
     }
 }

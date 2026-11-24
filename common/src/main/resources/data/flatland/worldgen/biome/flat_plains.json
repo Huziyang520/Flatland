@@ -36,8 +36,8 @@
               "type": "minecraft:horse",
               "count": {
                 "type": "minecraft:uniform",
-                "max_inclusive": 6,
-                "min_inclusive": 2
+                "min_inclusive": 2,
+                "max_inclusive": 6
               },
               "weight": 5
             },
@@ -45,8 +45,8 @@
               "type": "minecraft:donkey",
               "count": {
                 "type": "minecraft:uniform",
-                "max_inclusive": 3,
-                "min_inclusive": 1
+                "min_inclusive": 1,
+                "max_inclusive": 3
               },
               "weight": 1
             }
@@ -60,15 +60,10 @@
             {
               "type": "minecraft:zombie",
               "count": 4,
-              "weight": 90
+              "weight": 95
             },
             {
               "type": "minecraft:zombie_villager",
-              "count": 1,
-              "weight": 5
-            },
-            {
-              "type": "minecraft:zombie_horse",
               "count": 1,
               "weight": 5
             },
@@ -91,8 +86,8 @@
               "type": "minecraft:enderman",
               "count": {
                 "type": "minecraft:uniform",
-                "max_inclusive": 4,
-                "min_inclusive": 1
+                "min_inclusive": 1,
+                "max_inclusive": 4
               },
               "weight": 10
             },
@@ -107,8 +102,8 @@
               "type": "minecraft:glow_squid",
               "count": {
                 "type": "minecraft:uniform",
-                "max_inclusive": 6,
-                "min_inclusive": 4
+                "min_inclusive": 4,
+                "max_inclusive": 6
               },
               "weight": 10
             }
@@ -163,7 +158,6 @@
       "minecraft:ore_redstone",
       "minecraft:ore_redstone_lower",
       "minecraft:ore_diamond",
-      "minecraft:ore_diamond_medium",
       "minecraft:ore_diamond_large",
       "minecraft:ore_diamond_buried",
       "minecraft:ore_lapis",
@@ -182,15 +176,13 @@
     [
       "minecraft:glow_lichen",
       "minecraft:patch_tall_grass_2",
-      "minecraft:patch_bush",
       "minecraft:trees_plains",
       "minecraft:flower_plains",
       "minecraft:patch_grass_plain",
       "minecraft:brown_mushroom_normal",
       "minecraft:red_mushroom_normal",
       "minecraft:patch_pumpkin",
-      "minecraft:patch_sugar_cane",
-      "minecraft:patch_firefly_bush_near_water"
+      "minecraft:patch_sugar_cane"
     ],
     [
       "minecraft:freeze_top_layer"

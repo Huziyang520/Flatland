@@ -24,7 +24,7 @@ public final class FlatTerrain {
 
     public static int targetHeight(int x, int z, int vanillaTop) {
         int flatHeight = FlatRuntime.flatHeight();
-        if (!FlatRuntime.isActive() || vanillaTop <= flatHeight) {
+        if (!FlatRuntime.isActive()) {
             return vanillaTop;
         }
         float weight = FlatRuntime.bandWeight(x, z);
@@ -34,7 +34,9 @@ public final class FlatTerrain {
         float t = (weight - BIOME_THRESHOLD) / (1.0F - BIOME_THRESHOLD);
         t = t * t * (3.0F - 2.0F * t) * FlatRuntime.strength();
         int target = Math.round(vanillaTop + (flatHeight - vanillaTop) * t);
-        return Math.min(vanillaTop, Math.max(flatHeight, target));
+        int low = Math.min(vanillaTop, flatHeight);
+        int high = Math.max(vanillaTop, flatHeight);
+        return Math.max(low, Math.min(high, target));
     }
 
     public static void shave(ChunkAccess chunk, BiomeManager biomeManager) {
@@ -56,20 +58,29 @@ public final class FlatTerrain {
                     continue;
                 }
                 int top = topSolid(chunk, x, z, minY, maxY);
-                if (top <= flatHeight) {
+                if (top < minY) {
                     continue;
                 }
                 int target = targetHeight(x, z, top);
-                if (target >= top) {
+                if (target == top && top == flatHeight) {
+                    changed |= setSurface(chunk, x, target, z, biome);
                     continue;
                 }
-                for (int y = target + 1; y <= top; y++) {
-                    BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
-                    if (!state.isAir() && state.getFluidState().isEmpty()) {
-                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+                if (target > top) {
+                    for (int y = top + 1; y < target; y++) {
+                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState(), 2);
                         changed = true;
                     }
+                } else {
+                    for (int y = target + 1; y <= top; y++) {
+                        BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
+                        if (!state.isAir() && state.getFluidState().isEmpty()) {
+                            chunk.setBlockState(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+                            changed = true;
+                        }
+                    }
                 }
+                changed |= setSurface(chunk, x, target, z, biome);
             }
         }
 
@@ -79,31 +90,37 @@ public final class FlatTerrain {
         }
     }
 
-    public static void paintDesertSurface(ChunkAccess chunk, BiomeManager biomeManager) {
-        if (!FlatRuntime.isActive()) {
-            return;
+    private static boolean setSurface(ChunkAccess chunk, int x, int y, int z, Holder<Biome> biome) {
+        if (y <= chunk.getMinY() || y >= chunk.getMinY() + chunk.getHeight()) {
+            return false;
         }
-        int minY = chunk.getMinY();
-        int maxY = minY + chunk.getHeight();
-        var pos = chunk.getPos();
-        for (int localX = 0; localX < 16; localX++) {
-            for (int localZ = 0; localZ < 16; localZ++) {
-                int x = pos.getMinBlockX() + localX;
-                int z = pos.getMinBlockZ() + localZ;
-                Holder<Biome> biome = biomeManager.getBiome(new BlockPos(x, FlatRuntime.flatHeight(), z));
-                if (!FlatRuntime.isSandyBiome(biome)) {
-                    continue;
-                }
-                int top = topSolid(chunk, x, z, minY, maxY);
-                if (top < minY) {
-                    continue;
-                }
-                BlockState state = chunk.getBlockState(new BlockPos(x, top, z));
-                if (!state.is(Blocks.SAND)) {
-                    chunk.setBlockState(new BlockPos(x, top, z), Blocks.SAND.defaultBlockState(), 2);
-                }
+        BlockState surface = surfaceState(biome);
+        BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
+        if (state == surface) {
+            return false;
+        }
+        if (y > chunk.getMinY()) {
+            BlockState below = chunk.getBlockState(new BlockPos(x, y - 1, z));
+            if (below.isAir()) {
+                chunk.setBlockState(new BlockPos(x, y - 1, z), Blocks.DIRT.defaultBlockState(), 2);
             }
         }
+        chunk.setBlockState(new BlockPos(x, y, z), surface, 2);
+        return true;
+    }
+
+    private static BlockState surfaceState(Holder<Biome> biome) {
+        if (FlatRuntime.isSandyBiome(biome)) {
+            return Blocks.SAND.defaultBlockState();
+        }
+        if (biome.unwrapKey().map(key -> key.equals(FlatRuntime.FLAT_SNOWY)).orElse(false)) {
+            return Blocks.SNOW_BLOCK.defaultBlockState();
+        }
+        return Blocks.GRASS_BLOCK.defaultBlockState();
+    }
+
+    public static void paintDesertSurface(ChunkAccess chunk, BiomeManager biomeManager) {
+        shave(chunk, biomeManager);
     }
 
     public static NoiseColumn adjustColumn(NoiseColumn original, LevelHeightAccessor level) {

@@ -67,6 +67,7 @@ public final class FlatlandFabricConfig {
                 FLAT_HEIGHT.get(),
                 FLAT_STRENGTH.get(),
                 VARIANT.get().name(),
-                SPAWN_PREFER.get());
+                SPAWN_PREFER.get(),
+                CONFIG_VERSION.get());
     }
 }
