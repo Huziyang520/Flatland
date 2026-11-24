@@ -35,7 +35,7 @@ public final class FlatRuntime {
     private static volatile String variantMode = "AUTO";
     private static volatile int configVersion = 1;
     private static volatile Set<ResourceKey<Biome>> scope = Set.of();
-    private static final Map<ResourceKey<Biome>, Holder<Biome>> FLAT_BIOMES = new HashMap<>();
+    private static volatile Map<ResourceKey<Biome>, Holder<Biome>> flatBiomes = Map.of();
 
     private FlatRuntime() {
     }
@@ -45,7 +45,7 @@ public final class FlatRuntime {
     }
 
     public static void applyConfig() {
-        flatHeight = FlatlandConfig.FLAT_HEIGHT.get();
+        flatHeight = Math.max(62, Math.min(70, FlatlandConfig.FLAT_HEIGHT.get()));
         strength = FlatlandConfig.FLAT_STRENGTH.get() / 100.0F;
         variantMode = FlatlandConfig.VARIANT.get().name();
         configVersion = FlatlandConfig.CONFIG_VERSION.get();
@@ -60,29 +60,23 @@ public final class FlatRuntime {
             configured.add(ResourceKey.create(Registries.BIOME, id));
         }
         scope = Collections.unmodifiableSet(configured);
-        active = strength > 0.0F && !configured.isEmpty();
+        active = strength > 0.0F && !configured.isEmpty() && !flatBiomes.isEmpty();
         loaded = true;
     }
 
     public static void load(MinecraftServer server) {
         applyConfig();
 
-        FLAT_BIOMES.clear();
+        Map<ResourceKey<Biome>, Holder<Biome>> resolved = new HashMap<>(3);
         var registry = server.registryAccess().registryOrThrow(Registries.BIOME);
         for (ResourceKey<Biome> flatKey : List.of(FLAT_PLAINS, FLAT_SNOWY, FLAT_SANDY)) {
             registry.getHolder(flatKey).ifPresentOrElse(
-                    holder -> FLAT_BIOMES.put(flatKey, holder),
+                    holder -> resolved.put(flatKey, holder),
                     () -> LOGGER.warn("Flatland biome is missing from the datapack: {}", flatKey.location()));
         }
-
-        if (FLAT_BIOMES.isEmpty()) {
-            active = false;
-        }
+        flatBiomes = Map.copyOf(resolved);
+        active = strength > 0.0F && !scope.isEmpty() && !flatBiomes.isEmpty();
         LOGGER.info("Flatland active={} height={} strength={} scope={}", active, flatHeight, strength, scope.size());
-    }
-
-    public static boolean isLoaded() {
-        return loaded;
     }
 
     public static boolean isActive() {
@@ -118,7 +112,7 @@ public final class FlatRuntime {
     }
 
     public static boolean isOverworldLike(NoiseGeneratorSettings settings) {
-        return settings.seaLevel() == 63 && settings.defaultBlock().is(Blocks.STONE);
+        return settings.seaLevel() > 0 && settings.defaultBlock().is(Blocks.STONE);
     }
 
     public static void seed(long seed) {
@@ -126,7 +120,8 @@ public final class FlatRuntime {
     }
 
     public static Holder<Biome> remap(Holder<Biome> source, int blockX, int blockZ) {
-        if (!loaded || !active) {
+        Map<ResourceKey<Biome>, Holder<Biome>> biomes = flatBiomes;
+        if (!loaded || !active || biomes.isEmpty()) {
             return null;
         }
         Optional<ResourceKey<Biome>> key = source.unwrapKey();
@@ -136,16 +131,16 @@ public final class FlatRuntime {
         if (FlatBand.weight(blockX, blockZ) < 0.5F) {
             return null;
         }
-        return FLAT_BIOMES.get(pickVariant(source.value()));
+        return biomes.get(pickVariant(source.value()));
     }
 
     public static boolean isFlatBiome(Holder<Biome> holder) {
-        Optional<ResourceKey<Biome>> key = holder.unwrapKey();
-        return key.isPresent() && FLAT_BIOMES.containsKey(key.get());
+        return holder.is(FLAT_PLAINS) || holder.is(FLAT_SNOWY) || holder.is(FLAT_SANDY);
     }
 
     public static Stream<Holder<Biome>> possibleBiomes() {
-        return FLAT_BIOMES.isEmpty() ? Stream.empty() : FLAT_BIOMES.values().stream();
+        Map<ResourceKey<Biome>, Holder<Biome>> biomes = flatBiomes;
+        return biomes.isEmpty() ? Stream.empty() : biomes.values().stream();
     }
 
     private static ResourceKey<Biome> pickVariant(Biome biome) {
