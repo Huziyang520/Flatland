@@ -1,7 +1,5 @@
 package com.huziyang.flatland.world;
 
-import java.util.EnumSet;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -60,6 +58,9 @@ public final class FlatTerrain {
     }
 
     public static int adjustHeight(BiomeSource source, RandomState state, int x, int z, int vanillaHeight) {
+        if (FlatRuntime.bandWeight(x, z) < BIOME_THRESHOLD) {
+            return vanillaHeight;
+        }
         if (!isFlatColumn(source, state, x, z)) {
             return vanillaHeight;
         }
@@ -72,66 +73,71 @@ public final class FlatTerrain {
         }
         int minY = chunk.getMinY();
         int maxY = minY + chunk.getHeight();
+        int flatHeight = FlatRuntime.flatHeight();
         var pos = chunk.getPos();
-        boolean changed = false;
+        Heightmap heightmap = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
 
         for (int localX = 0; localX < 16; localX++) {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int x = pos.getMinBlockX() + localX;
                 int z = pos.getMinBlockZ() + localZ;
-                Holder<Biome> biome = biomeManager.getBiome(
-                        new BlockPos(x, FlatRuntime.flatHeight(), z));
+                if (FlatRuntime.bandWeight(x, z) < BIOME_THRESHOLD) {
+                    continue;
+                }
+                cursor.set(x, flatHeight, z);
+                Holder<Biome> biome = biomeManager.getBiome(cursor);
                 if (!isFlatColumn(biome, x, z)) {
                     continue;
                 }
-                int top = topSolid(chunk, x, z, minY, maxY);
-                if (top < 0) {
+                int top = topSolid(chunk, x, z, localX, localZ, minY, maxY, heightmap, cursor);
+                if (top == Integer.MIN_VALUE) {
                     continue;
                 }
                 int target = targetHeight(x, z, top);
                 if (target < top) {
                     for (int y = target + 1; y <= top; y++) {
-                        BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
+                        cursor.set(x, y, z);
+                        BlockState state = chunk.getBlockState(cursor);
                         if (!state.isAir() && state.getFluidState().isEmpty()) {
-                            chunk.setBlockState(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 2);
-                            changed = true;
+                            chunk.setBlockState(cursor, Blocks.AIR.defaultBlockState(), 2);
                         }
                     }
                 } else if (target > top) {
                     for (int y = top + 1; y <= target; y++) {
-                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState(), 2);
-                        changed = true;
+                        cursor.set(x, y, z);
+                        chunk.setBlockState(cursor, Blocks.DIRT.defaultBlockState(), 2);
                     }
                 }
                 if (target >= minY && target < maxY) {
                     BlockState surface = surfaceFor(biome);
-                    if (!chunk.getBlockState(new BlockPos(x, target, z)).equals(surface)) {
-                        chunk.setBlockState(new BlockPos(x, target, z), surface, 2);
-                        changed = true;
+                    cursor.set(x, target, z);
+                    if (!chunk.getBlockState(cursor).equals(surface)) {
+                        chunk.setBlockState(cursor, surface, 2);
                     }
                     if (target > minY) {
-                        BlockPos below = new BlockPos(x, target - 1, z);
-                        if (chunk.getBlockState(below).isAir()) {
-                            chunk.setBlockState(below, Blocks.DIRT.defaultBlockState(), 2);
-                            changed = true;
+                        cursor.set(x, target - 1, z);
+                        if (chunk.getBlockState(cursor).isAir()) {
+                            chunk.setBlockState(cursor, Blocks.DIRT.defaultBlockState(), 2);
                         }
                     }
                 }
             }
         }
-
-        if (changed) {
-            Heightmap.primeHeightmaps(chunk,
-                    EnumSet.of(Heightmap.Types.WORLD_SURFACE_WG, Heightmap.Types.OCEAN_FLOOR_WG));
-        }
     }
 
     public static NoiseColumn adjustColumn(BiomeSource source, RandomState state, int x, int z,
             NoiseColumn original, LevelHeightAccessor level) {
+        if (FlatRuntime.bandWeight(x, z) < BIOME_THRESHOLD) {
+            return original;
+        }
+        if (!isFlatColumn(source, state, x, z)) {
+            return original;
+        }
         int minY = level.getMinY();
         int height = level.getHeight();
         int top = topSolid(original, minY, minY + height);
-        if (!isFlatColumn(source, state, x, z)) {
+        if (top == Integer.MIN_VALUE) {
             return original;
         }
         int target = targetHeight(x, z, top);
@@ -167,15 +173,25 @@ public final class FlatTerrain {
         }).orElse(Blocks.GRASS_BLOCK.defaultBlockState());
     }
 
-    private static int topSolid(ChunkAccess chunk, int x, int z, int minY, int maxY) {
+    private static int topSolid(ChunkAccess chunk, int x, int z, int localX, int localZ,
+            int minY, int maxY, Heightmap heightmap, BlockPos.MutableBlockPos cursor) {
+        int heightmapTop = heightmap.getFirstAvailable(localX, localZ) - 1;
+        if (heightmapTop >= minY && heightmapTop < maxY) {
+            cursor.set(x, heightmapTop, z);
+            BlockState state = chunk.getBlockState(cursor);
+            if (!state.isAir() && state.getFluidState().isEmpty()) {
+                return heightmapTop;
+            }
+        }
         for (int y = maxY - 1; y >= minY; y--) {
-            BlockState state = chunk.getBlockState(new BlockPos(x, y, z));
+            cursor.set(x, y, z);
+            BlockState state = chunk.getBlockState(cursor);
             if (state.isAir()) {
                 continue;
             }
-            return state.getFluidState().isEmpty() ? y : -1;
+            return state.getFluidState().isEmpty() ? y : Integer.MIN_VALUE;
         }
-        return -1;
+        return Integer.MIN_VALUE;
     }
 
     private static int topSolid(BlockColumn column, int minY, int maxY) {
@@ -184,8 +200,8 @@ public final class FlatTerrain {
             if (state.isAir()) {
                 continue;
             }
-            return state.getFluidState().isEmpty() ? y : -1;
+            return state.getFluidState().isEmpty() ? y : Integer.MIN_VALUE;
         }
-        return -1;
+        return Integer.MIN_VALUE;
     }
 }
