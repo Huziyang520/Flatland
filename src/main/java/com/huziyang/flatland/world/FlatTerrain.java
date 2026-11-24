@@ -7,7 +7,6 @@ import net.minecraft.world.level.chunk.BlockColumn;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -41,11 +40,14 @@ public final class FlatTerrain {
     }
 
     public static int targetHeight(int x, int z, int vanillaTop) {
+        return targetHeight(x, z, vanillaTop, FlatRuntime.bandWeight(x, z));
+    }
+
+    private static int targetHeight(int x, int z, int vanillaTop, float weight) {
         int flatHeight = FlatRuntime.flatHeight();
         if (!FlatRuntime.isActive()) {
             return vanillaTop;
         }
-        float weight = FlatRuntime.bandWeight(x, z);
         if (weight < BIOME_THRESHOLD) {
             return vanillaTop;
         }
@@ -58,22 +60,24 @@ public final class FlatTerrain {
     }
 
     public static int adjustHeight(BiomeSource source, RandomState state, int x, int z, int vanillaHeight) {
-        if (FlatRuntime.bandWeight(x, z) < BIOME_THRESHOLD) {
+        float weight = FlatRuntime.bandWeight(x, z);
+        if (weight < BIOME_THRESHOLD) {
             return vanillaHeight;
         }
         if (!isFlatColumn(source, state, x, z)) {
             return vanillaHeight;
         }
-        return targetHeight(x, z, vanillaHeight);
+        return targetHeight(x, z, vanillaHeight, weight);
     }
 
-    public static void shave(ChunkAccess chunk, BiomeManager biomeManager) {
+    public static void shave(ChunkAccess chunk) {
         if (!FlatRuntime.isActive()) {
             return;
         }
         int minY = chunk.getMinY();
         int maxY = minY + chunk.getHeight();
         int flatHeight = FlatRuntime.flatHeight();
+        int quartY = QuartPos.fromBlock(flatHeight);
         var pos = chunk.getPos();
         Heightmap heightmap = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -82,11 +86,13 @@ public final class FlatTerrain {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int x = pos.getMinBlockX() + localX;
                 int z = pos.getMinBlockZ() + localZ;
-                if (FlatRuntime.bandWeight(x, z) < BIOME_THRESHOLD) {
+                float weight = FlatRuntime.bandWeight(x, z);
+                if (weight < BIOME_THRESHOLD) {
                     continue;
                 }
-                cursor.set(x, flatHeight, z);
-                Holder<Biome> biome = biomeManager.getBiome(cursor);
+                // Read the biome already stored in the chunk: it is the remapped one and avoids
+                // the eight fiddled samples of BiomeManager#getBiome on every column.
+                Holder<Biome> biome = chunk.getNoiseBiome(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z));
                 if (!isFlatColumn(biome, x, z)) {
                     continue;
                 }
@@ -94,7 +100,7 @@ public final class FlatTerrain {
                 if (top == Integer.MIN_VALUE) {
                     continue;
                 }
-                int target = targetHeight(x, z, top);
+                int target = targetHeight(x, z, top, weight);
                 if (target < top) {
                     for (int y = target + 1; y <= top; y++) {
                         cursor.set(x, y, z);
@@ -128,7 +134,8 @@ public final class FlatTerrain {
 
     public static NoiseColumn adjustColumn(BiomeSource source, RandomState state, int x, int z,
             NoiseColumn original, LevelHeightAccessor level) {
-        if (FlatRuntime.bandWeight(x, z) < BIOME_THRESHOLD) {
+        float weight = FlatRuntime.bandWeight(x, z);
+        if (weight < BIOME_THRESHOLD) {
             return original;
         }
         if (!isFlatColumn(source, state, x, z)) {
@@ -140,7 +147,7 @@ public final class FlatTerrain {
         if (top == Integer.MIN_VALUE) {
             return original;
         }
-        int target = targetHeight(x, z, top);
+        int target = targetHeight(x, z, top, weight);
         if (target == top) {
             return original;
         }
@@ -161,16 +168,13 @@ public final class FlatTerrain {
     }
 
     private static BlockState surfaceFor(Holder<Biome> biome) {
-        return biome.unwrapKey().map(key -> {
-            String path = key.identifier().getPath();
-            if ("flat_desert".equals(path)) {
-                return Blocks.SAND.defaultBlockState();
-            }
-            if ("flat_snowy_plains".equals(path)) {
-                return Blocks.SNOW_BLOCK.defaultBlockState();
-            }
-            return Blocks.GRASS_BLOCK.defaultBlockState();
-        }).orElse(Blocks.GRASS_BLOCK.defaultBlockState());
+        if (biome.is(FlatRuntime.FLAT_SANDY)) {
+            return Blocks.SAND.defaultBlockState();
+        }
+        if (biome.is(FlatRuntime.FLAT_SNOWY)) {
+            return Blocks.SNOW_BLOCK.defaultBlockState();
+        }
+        return Blocks.GRASS_BLOCK.defaultBlockState();
     }
 
     private static int topSolid(ChunkAccess chunk, int x, int z, int localX, int localZ,
