@@ -1,0 +1,10 @@
+pluginManagement {
+    repositories {
+        maven { name = 'Aliyun'; url = 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { name = 'NeoForge'; url = 'https://maven.neoforged.net/releases' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'flatland-26.1.2'

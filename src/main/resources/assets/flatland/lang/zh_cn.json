@@ -1,0 +1,19 @@
+{
+  "biome.flatland.flat_plains": "一马平川平原",
+  "biome.flatland.flat_snowy_plains": "一马平川雪原",
+  "biome.flatland.flat_desert": "一马平川沙漠",
+  "flatland.configuration.title": "一马平川",
+  "flatland.configuration.section.flatland-common": "世界生成",
+  "flatland.configuration.section.flatland-common.toml": "世界生成",
+  "flatland.configuration.worldgen": "世界生成",
+  "flatland.configuration.worldgen.replace_scope": "替换范围",
+  "flatland.configuration.worldgen.flat_height": "平坦高度",
+  "flatland.configuration.worldgen.flat_strength": "平坦强度",
+  "flatland.configuration.worldgen.variant": "变体",
+  "flatland.configuration.worldgen.variant.auto": "自动",
+  "flatland.configuration.worldgen.variant.temperate": "温带",
+  "flatland.configuration.worldgen.variant.snowy": "雪原",
+  "flatland.configuration.worldgen.variant.sandy": "沙地",
+  "flatland.configuration.worldgen.spawn_prefer_flatland": "出生点偏好",
+  "flatland.configuration.worldgen.config_version": "配置版本"
+}
