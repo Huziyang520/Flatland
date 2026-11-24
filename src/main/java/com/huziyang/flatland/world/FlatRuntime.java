@@ -33,6 +33,7 @@ public final class FlatRuntime {
     private static volatile int flatHeight = 62;
     private static volatile float strength = 1.0F;
     private static volatile String variantMode = "AUTO";
+    private static volatile int configVersion = 1;
     private static volatile Set<ResourceKey<Biome>> scope = Set.of();
     private static final Map<ResourceKey<Biome>, Holder<Biome>> FLAT_BIOMES = new HashMap<>();
 
@@ -47,6 +48,7 @@ public final class FlatRuntime {
         flatHeight = FlatlandConfig.FLAT_HEIGHT.get();
         strength = FlatlandConfig.FLAT_STRENGTH.get() / 100.0F;
         variantMode = FlatlandConfig.VARIANT.get().name();
+        configVersion = FlatlandConfig.CONFIG_VERSION.get();
 
         Set<ResourceKey<Biome>> configured = new HashSet<>();
         for (String entry : FlatlandConfig.REPLACE_SCOPE.get()) {
@@ -58,7 +60,7 @@ public final class FlatRuntime {
             configured.add(ResourceKey.create(Registries.BIOME, id));
         }
         scope = Collections.unmodifiableSet(configured);
-        active = strength > 0.0F;
+        active = strength > 0.0F && !configured.isEmpty();
         loaded = true;
     }
 
@@ -101,6 +103,18 @@ public final class FlatRuntime {
 
     public static boolean spawnPrefer() {
         return FlatlandConfig.SPAWN_PREFER.get();
+    }
+
+    public static String variantMode() {
+        return variantMode;
+    }
+
+    public static int scopeSize() {
+        return scope.size();
+    }
+
+    public static int configVersion() {
+        return configVersion;
     }
 
     public static boolean isOverworldLike(NoiseGeneratorSettings settings) {
