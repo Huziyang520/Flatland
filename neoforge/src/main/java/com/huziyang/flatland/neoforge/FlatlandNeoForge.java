@@ -17,7 +17,7 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
 @Mod(Flatland.MOD_ID)
 public final class FlatlandNeoForge {
     public FlatlandNeoForge(IEventBus modBus, ModContainer container, Dist dist) {
-        container.registerConfig(ModConfig.Type.COMMON, FlatlandNeoConfig.SPEC, "flatland-common.toml");
+        container.registerConfig(ModConfig.Type.LOCAL, FlatlandNeoConfig.SPEC, "flatland-common.toml");
         modBus.addListener(FlatlandNeoConfig::onLoad);
         modBus.addListener(FlatlandNeoConfig::onReload);
         NeoForge.EVENT_BUS.addListener((ServerAboutToStartEvent event) ->
