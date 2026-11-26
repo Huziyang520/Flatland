@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.RandomState;
 public final class FlatTerrain {
     private static final float BIOME_THRESHOLD = 0.5F;
     /** Blocks a column needs to stay inside a Flatland biome before the cut reaches full depth. */
-    private static final int EDGE_FADE_BLOCKS = 32;
+    private static final int EDGE_FADE_BLOCKS = 16;
 
     private static final ThreadLocal<FadeGrid> FADE_GRID = ThreadLocal.withInitial(FadeGrid::new);
 
