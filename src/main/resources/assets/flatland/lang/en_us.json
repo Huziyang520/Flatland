@@ -26,5 +26,17 @@
   "flatland.configuration.worldgen.spawn_prefer_flatland": "Spawn preference",
   "flatland.configuration.worldgen.spawn_prefer_flatland.tooltip": "Move the world spawn into flatland once, when a brand-new world is created. Existing worlds are left untouched.",
   "flatland.configuration.worldgen.config_version": "Config version",
-  "flatland.configuration.worldgen.config_version.tooltip": "Internal. Bumped when a one-time migration is needed."
+  "flatland.configuration.worldgen.config_version.tooltip": "Internal. Bumped when a one-time migration is needed.",
+  "flatland.configuration.replace_scope": "Replace scope",
+  "flatland.configuration.replace_scope.tooltip": "Biome ids converted into flatland. Unknown ids are ignored.",
+  "flatland.configuration.flat_height": "Flat height",
+  "flatland.configuration.flat_height.tooltip": "Y of the top solid block. 62 keeps the ground flush with sea level.",
+  "flatland.configuration.flat_strength": "Flat strength",
+  "flatland.configuration.flat_strength.tooltip": "0 keeps vanilla terrain, 100 makes the converted area perfectly flat.",
+  "flatland.configuration.variant": "Variant",
+  "flatland.configuration.variant.tooltip": "AUTO picks by the replaced biome's temperature: cold -> snowy, hot -> sandy, otherwise temperate.",
+  "flatland.configuration.spawn_prefer_flatland": "Spawn preference",
+  "flatland.configuration.spawn_prefer_flatland.tooltip": "Move the world spawn into flatland once, when a brand-new world is created. Existing worlds are left untouched.",
+  "flatland.configuration.config_version": "Config version",
+  "flatland.configuration.config_version.tooltip": "Internal. Bumped when a one-time migration is needed."
 }
