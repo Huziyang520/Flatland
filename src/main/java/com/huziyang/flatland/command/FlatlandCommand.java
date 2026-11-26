@@ -20,6 +20,7 @@ public final class FlatlandCommand {
         dispatcher.register(Commands.literal("flatland")
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("status").executes(ctx -> status(ctx.getSource())))
+                .then(Commands.literal("biomes").executes(ctx -> biomes(ctx.getSource())))
                 .then(Commands.literal("probe")
                         .executes(ctx -> probe(ctx.getSource(), sourcePos(ctx.getSource())))
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -48,6 +49,12 @@ public final class FlatlandCommand {
         return 1;
     }
 
+    private static int biomes(CommandSourceStack source) {
+        for (String line : FlatRuntime.biomeIds()) {
+            source.sendSuccess(() -> Component.literal(line), false);
+        }
+        return 1;
+    }
     private static int probe(CommandSourceStack source, BlockPos pos) {
         Level level = source.getLevel();
         int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ());
