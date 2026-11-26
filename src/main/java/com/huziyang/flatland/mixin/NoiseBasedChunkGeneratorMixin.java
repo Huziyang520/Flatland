@@ -36,7 +36,7 @@ public abstract class NoiseBasedChunkGeneratorMixin {
     private void flatland$shave(ChunkAccess chunk, WorldGenerationContext context, RandomState state,
             StructureManager structures, BiomeManager biomes, Registry<Biome> registry, Blender blender,
             CallbackInfo ci) {
-        FlatTerrain.shave(chunk);
+        FlatTerrain.shave(chunk, flatland$biomeSource(), state);
     }
 
     @Inject(method = "getBaseHeight(IILnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/world/level/LevelHeightAccessor;Lnet/minecraft/world/level/levelgen/RandomState;)I",
