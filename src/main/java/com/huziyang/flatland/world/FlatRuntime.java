@@ -77,6 +77,7 @@ public final class FlatRuntime {
         flatBiomes = Map.copyOf(resolved);
         active = strength > 0.0F && !scope.isEmpty() && !flatBiomes.isEmpty();
         LOGGER.info("Flatland active={} height={} strength={} scope={}", active, flatHeight, strength, scope.size());
+        LOGGER.info("Flatland biomes: {}", biomeIds());
     }
 
     public static boolean isActive() {
@@ -138,6 +139,14 @@ public final class FlatRuntime {
         return holder.is(FLAT_PLAINS) || holder.is(FLAT_SNOWY) || holder.is(FLAT_SANDY);
     }
 
+    public static List<String> biomeIds() {
+        Set<ResourceKey<Biome>> resolved = flatBiomes.keySet();
+        List<String> ids = new java.util.ArrayList<>(3);
+        for (ResourceKey<Biome> key : List.of(FLAT_PLAINS, FLAT_SNOWY, FLAT_SANDY)) {
+            ids.add((resolved.contains(key) ? "registered " : "MISSING    ") + key.identifier());
+        }
+        return ids;
+    }
     public static Stream<Holder<Biome>> possibleBiomes() {
         Map<ResourceKey<Biome>, Holder<Biome>> biomes = flatBiomes;
         return biomes.isEmpty() ? Stream.empty() : biomes.values().stream();
