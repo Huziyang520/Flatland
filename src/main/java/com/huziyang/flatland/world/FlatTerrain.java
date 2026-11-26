@@ -118,9 +118,10 @@ public final class FlatTerrain {
                 if (weight < BIOME_THRESHOLD) {
                     continue;
                 }
-                // Read the biome already stored in the chunk: it is the remapped one and avoids
-                // the eight fiddled samples of BiomeManager#getBiome on every column.
-                Holder<Biome> biome = chunk.getNoiseBiome(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z));
+                // Sample the source, not the chunk: some versions call buildSurface before the
+                // chunk biome container is filled, which would leave every column unshaved.
+                Holder<Biome> biome = source.getNoiseBiome(
+                        QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z), state.sampler());
                 int top = topSolid(chunk, x, z, localX, localZ, minY, maxY, heightmap, cursor);
                 if (top == Integer.MIN_VALUE) {
                     continue;
