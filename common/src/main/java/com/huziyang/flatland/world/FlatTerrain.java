@@ -20,9 +20,10 @@ import net.minecraft.world.level.levelgen.RandomState;
  */
 public final class FlatTerrain {
     private static final float BIOME_THRESHOLD = 0.5F;
-    /** Distance over which the cut fades out, so a biome border becomes a slope, not a wall. */
-    private static final int EDGE_FADE_BLOCKS = 12;
-    private static final float FADE_PROBES = 8.0F;
+    /** Blocks a column needs to stay inside a Flatland biome before the cut reaches full depth. */
+    private static final int EDGE_FADE_BLOCKS = 32;
+
+    private static final ThreadLocal<FadeGrid> FADE_GRID = ThreadLocal.withInitial(FadeGrid::new);
 
     private FlatTerrain() {
     }
@@ -43,30 +44,15 @@ public final class FlatTerrain {
     }
 
     /**
-     * 0..1 cut strength for a column already known to be flat: it stays at 1 only while the
-     * eight probes {@link #EDGE_FADE_BLOCKS} away are flat too. Near a biome border the cut
-     * weakens, so the surface climbs back to vanilla height instead of ending in a sheer face.
+     * 0..1 cut strength, 0 exactly at a Flatland border and 1 from {@link #EDGE_FADE_BLOCKS}
+     * blocks inside it. Vanilla height is continuous across a biome border, so fading the cut
+     * to zero there joins the flat surface back onto the vanilla terrain instead of slicing it.
      */
     public static float edgeFade(BiomeSource source, RandomState state, int x, int z) {
-        BiomeResolver resolver = source.createUncachedResolver(state);
-        int flat = 1;
-        flat += flatProbe(resolver, x + EDGE_FADE_BLOCKS, z);
-        flat += flatProbe(resolver, x - EDGE_FADE_BLOCKS, z);
-        flat += flatProbe(resolver, x, z + EDGE_FADE_BLOCKS);
-        flat += flatProbe(resolver, x, z - EDGE_FADE_BLOCKS);
-        flat += flatProbe(resolver, x + EDGE_FADE_BLOCKS, z + EDGE_FADE_BLOCKS);
-        flat += flatProbe(resolver, x - EDGE_FADE_BLOCKS, z - EDGE_FADE_BLOCKS);
-        flat += flatProbe(resolver, x + EDGE_FADE_BLOCKS, z - EDGE_FADE_BLOCKS);
-        flat += flatProbe(resolver, x - EDGE_FADE_BLOCKS, z + EDGE_FADE_BLOCKS);
-        return flat / (FADE_PROBES + 1.0F);
-    }
-
-    private static int flatProbe(BiomeResolver resolver, int x, int z) {
-        Holder<Biome> biome = resolver.getNoiseBiome(
-                QuartPos.fromBlock(x),
-                QuartPos.fromBlock(FlatRuntime.flatHeight()),
-                QuartPos.fromBlock(z));
-        return isFlatColumn(biome, x, z) ? 1 : 0;
+        if (!FlatRuntime.isActive()) {
+            return 0.0F;
+        }
+        return FADE_GRID.get().fadeAt(source, state, x, z);
     }
 
     public static int targetHeight(int x, int z, int vanillaTop) {
@@ -97,7 +83,8 @@ public final class FlatTerrain {
         if (!isFlatColumn(source, state, x, z)) {
             return vanillaHeight;
         }
-        return targetHeight(x, z, vanillaHeight, weight, edgeFade(source, state, x, z));
+        float fade = edgeFade(source, state, x, z);
+        return fade <= 0.0F ? vanillaHeight : targetHeight(x, z, vanillaHeight, weight, fade);
     }
 
     public static void shave(ChunkAccess chunk, BiomeSource source, RandomState state) {
@@ -111,9 +98,6 @@ public final class FlatTerrain {
         var pos = chunk.getPos();
         Heightmap heightmap = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        int fadeCellX = Integer.MIN_VALUE;
-        int fadeCellZ = Integer.MIN_VALUE;
-        float fade = 1.0F;
 
         for (int localX = 0; localX < 16; localX++) {
             for (int localZ = 0; localZ < 16; localZ++) {
@@ -129,12 +113,9 @@ public final class FlatTerrain {
                 if (!isFlatColumn(biome, x, z)) {
                     continue;
                 }
-                int cellX = QuartPos.fromBlock(x);
-                int cellZ = QuartPos.fromBlock(z);
-                if (cellX != fadeCellX || cellZ != fadeCellZ) {
-                    fade = edgeFade(source, state, x, z);
-                    fadeCellX = cellX;
-                    fadeCellZ = cellZ;
+                float fade = edgeFade(source, state, x, z);
+                if (fade <= 0.0F) {
+                    continue;
                 }
                 int top = topSolid(chunk, x, z, localX, localZ, minY, maxY, heightmap, cursor);
                 if (top == Integer.MIN_VALUE) {
@@ -181,13 +162,17 @@ public final class FlatTerrain {
         if (!isFlatColumn(source, state, x, z)) {
             return original;
         }
+        float fade = edgeFade(source, state, x, z);
+        if (fade <= 0.0F) {
+            return original;
+        }
         int minY = level.getMinY();
         int height = level.getHeight();
         int top = topSolid(original, minY, minY + height);
         if (top == Integer.MIN_VALUE) {
             return original;
         }
-        int target = targetHeight(x, z, top, weight, edgeFade(source, state, x, z));
+        int target = targetHeight(x, z, top, weight, fade);
         if (target == top) {
             return original;
         }
@@ -247,5 +232,105 @@ public final class FlatTerrain {
             return state.getFluidState().isEmpty() ? y : Integer.MIN_VALUE;
         }
         return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Per-chunk coarse map of the distance to the nearest non-Flatland cell, sampled from the
+     * biome source so both sides of a chunk border see the same border. The per-column value is
+     * a bilinear blend of those cells, which keeps the cut continuous at block resolution.
+     */
+    private static final class FadeGrid {
+        private static final int CELL_BLOCKS = 4;
+        private static final int CHUNK_CELLS = 16 / CELL_BLOCKS;
+        private static final int FADE_CELLS = EDGE_FADE_BLOCKS / CELL_BLOCKS;
+        private static final int MARGIN_CELLS = FADE_CELLS + 2;
+        private static final int GRID = CHUNK_CELLS + 2 * MARGIN_CELLS;
+        private static final float DIAGONAL = 1.4142135F;
+        private static final float FAR = 255.0F;
+
+        private final float[] distance = new float[GRID * GRID];
+        private int chunkX = Integer.MIN_VALUE;
+        private int chunkZ = Integer.MIN_VALUE;
+
+        float fadeAt(BiomeSource source, RandomState state, int x, int z) {
+            int cellChunkX = x >> 4;
+            int cellChunkZ = z >> 4;
+            if (cellChunkX != chunkX || cellChunkZ != chunkZ) {
+                rebuild(source, state, cellChunkX, cellChunkZ);
+                chunkX = cellChunkX;
+                chunkZ = cellChunkZ;
+            }
+            float originX = chunkX * CHUNK_CELLS - MARGIN_CELLS;
+            float originZ = chunkZ * CHUNK_CELLS - MARGIN_CELLS;
+            float fx = (x - CELL_BLOCKS * 0.5F) / CELL_BLOCKS - originX;
+            float fz = (z - CELL_BLOCKS * 0.5F) / CELL_BLOCKS - originZ;
+            int i0 = Math.max(0, Math.min(GRID - 2, (int) Math.floor(fx)));
+            int j0 = Math.max(0, Math.min(GRID - 2, (int) Math.floor(fz)));
+            float tx = Math.max(0.0F, Math.min(1.0F, fx - i0));
+            float tz = Math.max(0.0F, Math.min(1.0F, fz - j0));
+            float near = distance[i0 * GRID + j0];
+            float nearX = distance[(i0 + 1) * GRID + j0];
+            float far = distance[i0 * GRID + j0 + 1];
+            float farX = distance[(i0 + 1) * GRID + j0 + 1];
+            float low = near + (nearX - near) * tx;
+            float high = far + (farX - far) * tx;
+            float cells = low + (high - low) * tz;
+            float fade = cells * CELL_BLOCKS / EDGE_FADE_BLOCKS;
+            return fade > 1.0F ? 1.0F : fade;
+        }
+
+        private void rebuild(BiomeSource source, RandomState state, int cellChunkX, int cellChunkZ) {
+            BiomeResolver resolver = source.createUncachedResolver(state);
+            int originX = cellChunkX * CHUNK_CELLS - MARGIN_CELLS;
+            int originZ = cellChunkZ * CHUNK_CELLS - MARGIN_CELLS;
+            int quartFlat = QuartPos.fromBlock(FlatRuntime.flatHeight());
+            for (int i = 0; i < GRID; i++) {
+                for (int j = 0; j < GRID; j++) {
+                    int x = (originX + i) * CELL_BLOCKS + CELL_BLOCKS / 2;
+                    int z = (originZ + j) * CELL_BLOCKS + CELL_BLOCKS / 2;
+                    Holder<Biome> biome = resolver.getNoiseBiome(
+                            QuartPos.fromBlock(x), quartFlat, QuartPos.fromBlock(z));
+                    distance[i * GRID + j] = isFlatColumn(biome, x, z) ? FAR : 0.0F;
+                }
+            }
+            for (int i = 0; i < GRID; i++) {
+                for (int j = 0; j < GRID; j++) {
+                    int index = i * GRID + j;
+                    float best = distance[index];
+                    if (i > 0) {
+                        best = Math.min(best, distance[index - GRID] + 1.0F);
+                        if (j > 0) {
+                            best = Math.min(best, distance[index - GRID - 1] + DIAGONAL);
+                        }
+                        if (j + 1 < GRID) {
+                            best = Math.min(best, distance[index - GRID + 1] + DIAGONAL);
+                        }
+                    }
+                    if (j > 0) {
+                        best = Math.min(best, distance[index - 1] + 1.0F);
+                    }
+                    distance[index] = best;
+                }
+            }
+            for (int i = GRID - 1; i >= 0; i--) {
+                for (int j = GRID - 1; j >= 0; j--) {
+                    int index = i * GRID + j;
+                    float best = distance[index];
+                    if (i + 1 < GRID) {
+                        best = Math.min(best, distance[index + GRID] + 1.0F);
+                        if (j + 1 < GRID) {
+                            best = Math.min(best, distance[index + GRID + 1] + DIAGONAL);
+                        }
+                        if (j > 0) {
+                            best = Math.min(best, distance[index + GRID - 1] + DIAGONAL);
+                        }
+                    }
+                    if (j + 1 < GRID) {
+                        best = Math.min(best, distance[index + 1] + 1.0F);
+                    }
+                    distance[index] = best;
+                }
+            }
+        }
     }
 }
