@@ -35,7 +35,7 @@ public abstract class NoiseBasedChunkGeneratorMixin {
     @Inject(method = BUILD_SURFACE, at = @At("TAIL"), remap = false)
     private void flatland$finishSurface(ChunkAccess chunk, NoiseChunk noiseChunk, RandomState state,
             BiomeManager biomeManager, Set<Holder<Biome>> biomes, MaterialRule rule, CallbackInfo ci) {
-        FlatTerrain.shave(chunk);
+        FlatTerrain.shave(chunk, flatland$biomeSource(), state);
     }
 
     @ModifyVariable(method = BUILD_SURFACE, at = @At("HEAD"), argsOnly = true, index = 6, remap = false)

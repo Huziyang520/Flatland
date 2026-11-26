@@ -6,6 +6,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeResolver;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,6 +20,9 @@ import net.minecraft.world.level.levelgen.RandomState;
  */
 public final class FlatTerrain {
     private static final float BIOME_THRESHOLD = 0.5F;
+    /** Distance over which the cut fades out, so a biome border becomes a slope, not a wall. */
+    private static final int EDGE_FADE_BLOCKS = 12;
+    private static final float FADE_PROBES = 8.0F;
 
     private FlatTerrain() {
     }
@@ -32,18 +36,44 @@ public final class FlatTerrain {
     public static boolean isFlatColumn(BiomeSource source, RandomState state, int x, int z) {
         // 26.3 dropped the coordinate overload on BiomeSource; the uncached resolver goes
         // through createResolver, which the biome source mixin already wraps.
-        Holder<Biome> biome = source.createUncachedResolver(state).getNoiseBiome(
+        return isFlatColumn(source.createUncachedResolver(state).getNoiseBiome(
+                QuartPos.fromBlock(x),
+                QuartPos.fromBlock(FlatRuntime.flatHeight()),
+                QuartPos.fromBlock(z)), x, z);
+    }
+
+    /**
+     * 0..1 cut strength for a column already known to be flat: it stays at 1 only while the
+     * eight probes {@link #EDGE_FADE_BLOCKS} away are flat too. Near a biome border the cut
+     * weakens, so the surface climbs back to vanilla height instead of ending in a sheer face.
+     */
+    public static float edgeFade(BiomeSource source, RandomState state, int x, int z) {
+        BiomeResolver resolver = source.createUncachedResolver(state);
+        int flat = 1;
+        flat += flatProbe(resolver, x + EDGE_FADE_BLOCKS, z);
+        flat += flatProbe(resolver, x - EDGE_FADE_BLOCKS, z);
+        flat += flatProbe(resolver, x, z + EDGE_FADE_BLOCKS);
+        flat += flatProbe(resolver, x, z - EDGE_FADE_BLOCKS);
+        flat += flatProbe(resolver, x + EDGE_FADE_BLOCKS, z + EDGE_FADE_BLOCKS);
+        flat += flatProbe(resolver, x - EDGE_FADE_BLOCKS, z - EDGE_FADE_BLOCKS);
+        flat += flatProbe(resolver, x + EDGE_FADE_BLOCKS, z - EDGE_FADE_BLOCKS);
+        flat += flatProbe(resolver, x - EDGE_FADE_BLOCKS, z + EDGE_FADE_BLOCKS);
+        return flat / (FADE_PROBES + 1.0F);
+    }
+
+    private static int flatProbe(BiomeResolver resolver, int x, int z) {
+        Holder<Biome> biome = resolver.getNoiseBiome(
                 QuartPos.fromBlock(x),
                 QuartPos.fromBlock(FlatRuntime.flatHeight()),
                 QuartPos.fromBlock(z));
-        return isFlatColumn(biome, x, z);
+        return isFlatColumn(biome, x, z) ? 1 : 0;
     }
 
     public static int targetHeight(int x, int z, int vanillaTop) {
-        return targetHeight(x, z, vanillaTop, FlatRuntime.bandWeight(x, z));
+        return targetHeight(x, z, vanillaTop, FlatRuntime.bandWeight(x, z), 1.0F);
     }
 
-    private static int targetHeight(int x, int z, int vanillaTop, float weight) {
+    private static int targetHeight(int x, int z, int vanillaTop, float weight, float fade) {
         int flatHeight = FlatRuntime.flatHeight();
         if (!FlatRuntime.isActive()) {
             return vanillaTop;
@@ -52,7 +82,7 @@ public final class FlatTerrain {
             return vanillaTop;
         }
         float t = (weight - BIOME_THRESHOLD) / (1.0F - BIOME_THRESHOLD);
-        t = t * t * (3.0F - 2.0F * t) * FlatRuntime.strength();
+        t = t * t * (3.0F - 2.0F * t) * FlatRuntime.strength() * fade;
         int target = Math.round(vanillaTop + (flatHeight - vanillaTop) * t);
         int low = Math.min(vanillaTop, flatHeight);
         int high = Math.max(vanillaTop, flatHeight);
@@ -67,10 +97,10 @@ public final class FlatTerrain {
         if (!isFlatColumn(source, state, x, z)) {
             return vanillaHeight;
         }
-        return targetHeight(x, z, vanillaHeight, weight);
+        return targetHeight(x, z, vanillaHeight, weight, edgeFade(source, state, x, z));
     }
 
-    public static void shave(ChunkAccess chunk) {
+    public static void shave(ChunkAccess chunk, BiomeSource source, RandomState state) {
         if (!FlatRuntime.isActive()) {
             return;
         }
@@ -81,6 +111,9 @@ public final class FlatTerrain {
         var pos = chunk.getPos();
         Heightmap heightmap = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int fadeCellX = Integer.MIN_VALUE;
+        int fadeCellZ = Integer.MIN_VALUE;
+        float fade = 1.0F;
 
         for (int localX = 0; localX < 16; localX++) {
             for (int localZ = 0; localZ < 16; localZ++) {
@@ -96,16 +129,23 @@ public final class FlatTerrain {
                 if (!isFlatColumn(biome, x, z)) {
                     continue;
                 }
+                int cellX = QuartPos.fromBlock(x);
+                int cellZ = QuartPos.fromBlock(z);
+                if (cellX != fadeCellX || cellZ != fadeCellZ) {
+                    fade = edgeFade(source, state, x, z);
+                    fadeCellX = cellX;
+                    fadeCellZ = cellZ;
+                }
                 int top = topSolid(chunk, x, z, localX, localZ, minY, maxY, heightmap, cursor);
                 if (top == Integer.MIN_VALUE) {
                     continue;
                 }
-                int target = targetHeight(x, z, top, weight);
+                int target = targetHeight(x, z, top, weight, fade);
                 if (target < top) {
                     for (int y = target + 1; y <= top; y++) {
                         cursor.set(x, y, z);
-                        BlockState state = chunk.getBlockState(cursor);
-                        if (!state.isAir() && state.getFluidState().isEmpty()) {
+                        BlockState existing = chunk.getBlockState(cursor);
+                        if (!existing.isAir() && existing.getFluidState().isEmpty()) {
                             chunk.setBlockState(cursor, Blocks.AIR.defaultBlockState(), 2);
                         }
                     }
@@ -147,7 +187,7 @@ public final class FlatTerrain {
         if (top == Integer.MIN_VALUE) {
             return original;
         }
-        int target = targetHeight(x, z, top, weight);
+        int target = targetHeight(x, z, top, weight, edgeFade(source, state, x, z));
         if (target == top) {
             return original;
         }
