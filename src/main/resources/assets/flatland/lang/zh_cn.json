@@ -26,5 +26,17 @@
   "flatland.configuration.worldgen.spawn_prefer_flatland": "出生点偏好",
   "flatland.configuration.worldgen.spawn_prefer_flatland.tooltip": "仅在全新世界创建时，将世界出生点移入平坦群系一次；已有存档不做改动。",
   "flatland.configuration.worldgen.config_version": "配置版本",
-  "flatland.configuration.worldgen.config_version.tooltip": "内部使用。需要一次性迁移时递增。"
+  "flatland.configuration.worldgen.config_version.tooltip": "内部使用。需要一次性迁移时递增。",
+  "flatland.configuration.replace_scope": "替换范围",
+  "flatland.configuration.replace_scope.tooltip": "被转换为平坦群系的生物群系 ID；无效 ID 会被忽略。",
+  "flatland.configuration.flat_height": "平坦高度",
+  "flatland.configuration.flat_height.tooltip": "顶层固体方块的 Y 坐标。62 与海平面齐平。",
+  "flatland.configuration.flat_strength": "平坦强度",
+  "flatland.configuration.flat_strength.tooltip": "0 保持原版地形，100 使转换区域完全平坦。",
+  "flatland.configuration.variant": "变体",
+  "flatland.configuration.variant.tooltip": "自动模式按被替换群系的温度选择：寒冷为雪原，炎热为沙漠，其余为平原。",
+  "flatland.configuration.spawn_prefer_flatland": "出生点偏好",
+  "flatland.configuration.spawn_prefer_flatland.tooltip": "仅在全新世界创建时，将世界出生点移入平坦群系一次；已有存档不做改动。",
+  "flatland.configuration.config_version": "配置版本",
+  "flatland.configuration.config_version.tooltip": "内部使用。需要一次性迁移时递增。"
 }
